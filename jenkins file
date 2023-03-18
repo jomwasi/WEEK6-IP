@@ -1,0 +1,61 @@
+def COLOR_MAP = [
+    'SUCCESS': 'good', 
+    'FAILURE': 'danger',
+]
+def WEB_URL = 'https://week6-ip.onrender.com'
+
+pipeline {
+   
+    agent any
+   
+    tools {nodejs "19.7.0"}
+   
+    stages {
+        stage('Start') {
+            steps {
+                echo 'Build is starting'
+            }
+        }
+        stage('Clone github repository') {
+            steps {
+                git url: 'https://github.com/jomwasi/WEEK6-IP.git', branch: 'master'
+            }
+        }
+        stage('Install dependencies') {
+            steps {
+               bat '''
+                   npm install
+                   '''
+            }
+        }
+        stage('running test') {
+            steps {
+                bat '''
+                   npm run test
+                   '''
+            }
+        }
+        stage('deploying to render') {
+            steps {
+                bat '''
+                   curl -X POST https://api.render.com/deploy/srv-cg5ncl7dvk4pls63og1g?key=s_gI4o9wAk8
+                   '''
+            }
+        }
+       
+        stage('End') {
+            steps {
+                echo 'Build has run successfully'
+            }
+        }
+    }
+
+    post {
+        always {
+                slackSend channel: '#WEEK6-IP',
+                    color: COLOR_MAP[currentBuild.currentResult],
+                    message: "*${currentBuild.currentResult}:* Job ${JOB_NAME} build ${BUILD_NUMBER} \n link to the application ${WEB_URL} \n More information can be found at: ${BUILD_URL}HTML_20Report/"
+                
+                }
+           }
+  }
